@@ -1,4 +1,10 @@
--- [[ fyorUI Library v1.5 ]]
+--[[
+    fyorUI - Version 2.5 (Redesign Element Edition)
+    - New Slider & Dropdown Visuals
+    - External Bottom Drag Handle
+    - Enhanced Draggable System
+]]
+
 local fyorUI = {}
 
 local TweenService = game:GetService("TweenService")
@@ -12,21 +18,25 @@ local Mouse = LocalPlayer:GetMouse()
 
 local THEME = {
     Background = Color3.fromRGB(10, 10, 10),
-    Secondary = Color3.fromRGB(20, 20, 20),
-    Accent = Color3.fromRGB(0, 85, 185),
+    Secondary = Color3.fromRGB(18, 18, 18),
+    Accent = Color3.fromRGB(0, 70, 180),
+    AccentDark = Color3.fromRGB(0, 40, 100),
     Text = Color3.fromRGB(255, 255, 255),
-    TextDark = Color3.fromRGB(150, 150, 150),
-    Black = Color3.fromRGB(5, 5, 5),
-    Corner = UDim.new(0, 10),
+    TextDark = Color3.fromRGB(140, 140, 140),
+    Border = Color3.fromRGB(30, 30, 30),
     Tween = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
 }
 
+-- Draggable Utility
 local function MakeDraggable(gui, dragHandle)
     local dragging, dragInput, dragStart, startPos
     dragHandle = dragHandle or gui
     dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true; dragStart = input.Position; startPos = gui.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
@@ -35,110 +45,79 @@ local function MakeDraggable(gui, dragHandle)
             gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
 end
 
--- [[ NOTIFICATION SYSTEM ]]
-local NotifGui = Instance.new("ScreenGui", CoreGui)
-local NotifContainer = Instance.new("Frame", NotifGui)
-NotifContainer.Size = UDim2.new(0, 250, 1, -20)
-NotifContainer.Position = UDim2.new(1, -260, 0, 10)
-NotifContainer.BackgroundTransparency = 1
-Instance.new("UIListLayout", NotifContainer).VerticalAlignment = Enum.VerticalAlignment.Bottom
-
-function fyorUI:Notify(title, desc, duration)
-    local n = Instance.new("Frame", NotifContainer)
-    n.Size = UDim2.new(1, 0, 0, 0)
-    n.BackgroundColor3 = THEME.Secondary
-    n.ClipsDescendants = true
-    Instance.new("UICorner", n).CornerRadius = THEME.Corner
-    Instance.new("UIStroke", n).Color = THEME.Accent
-    
-    local tl = Instance.new("TextLabel", n)
-    tl.Text = title; tl.Font = Enum.Font.GothamBold; tl.TextColor3 = THEME.Accent; tl.Size = UDim2.new(1, -20, 0, 25); tl.Position = UDim2.new(0, 10, 0, 5); tl.BackgroundTransparency = 1; tl.TextXAlignment = "Left"
-    
-    local dl = Instance.new("TextLabel", n)
-    dl.Text = desc; dl.Font = Enum.Font.GothamMedium; dl.TextColor3 = THEME.Text; dl.Size = UDim2.new(1, -20, 0, 30); dl.Position = UDim2.new(0, 10, 0, 25); dl.BackgroundTransparency = 1; dl.TextXAlignment = "Left"; dl.TextWrapped = true
-
-    TweenService:Create(n, THEME.Tween, {Size = UDim2.new(1, 0, 0, 65)}):Play()
-    task.delay(duration or 5, function()
-        local tw = TweenService:Create(n, THEME.Tween, {Size = UDim2.new(1, 0, 0, 0)})
-        tw:Play() tw.Completed:Connect(function() n:Destroy() end)
-    end)
-end
-
--- [[ WINDOW CREATION ]]
 function fyorUI:CreateWindow(libName)
     local MainGui = Instance.new("ScreenGui", CoreGui)
-    MainGui.Name = "fyorUI_" .. math.random(100,999)
-    
+    MainGui.Name = "fyorUI_v25"
+    MainGui.ResetOnSpawn = false
+
+    -- Toggle Button
     local ToggleBtn = Instance.new("TextButton", MainGui)
     ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
-    ToggleBtn.Position = UDim2.new(0, 20, 0, 20)
-    ToggleBtn.BackgroundColor3 = THEME.Black
-    ToggleBtn.Text = "f"
-    ToggleBtn.TextColor3 = THEME.Accent
-    ToggleBtn.Font = Enum.Font.GothamBold
-    ToggleBtn.TextSize = 22
-    Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 12)
-    Instance.new("UIStroke", ToggleBtn).Color = THEME.Secondary
+    ToggleBtn.Position = UDim2.new(0, 30, 0, 30)
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+    ToggleBtn.Text = "F"; ToggleBtn.TextColor3 = THEME.Accent; ToggleBtn.Font = Enum.Font.GothamBold; ToggleBtn.TextSize = 18
+    Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 10)
+    Instance.new("UIStroke", ToggleBtn).Color = THEME.Accent
     MakeDraggable(ToggleBtn)
 
+    -- Window
     local Window = Instance.new("Frame", MainGui)
-    Window.Size = UDim2.new(0, 550, 0, 420)
-    Window.Position = UDim2.new(0.5, -275, 0.5, -210)
+    Window.Size = UDim2.new(0, 560, 0, 410)
+    Window.Position = UDim2.new(0.5, -280, 0.5, -205)
     Window.BackgroundColor3 = THEME.Background
-    Instance.new("UICorner", Window).CornerRadius = THEME.Corner
-    Instance.new("UIStroke", Window).Color = THEME.Secondary
-    MakeDraggable(Window)
+    Window.ClipsDescendants = false -- Set false agar drag handle di luar terlihat
+    Instance.new("UICorner", Window).CornerRadius = UDim.new(0, 12)
+    Instance.new("UIStroke", Window).Color = THEME.Border
 
-    ToggleBtn.MouseButton1Click:Connect(function()
-        Window.Visible = not Window.Visible
-    end)
+    -- [ DRAG HANDLE DI BAWAH ]
+    local DragHandle = Instance.new("TextButton", Window)
+    DragHandle.Name = "BottomDrag"
+    DragHandle.Size = UDim2.new(0, 200, 0, 20)
+    DragHandle.Position = UDim2.new(0.5, -100, 1, 5)
+    DragHandle.BackgroundTransparency = 1
+    DragHandle.Text = "_____________________"
+    DragHandle.TextColor3 = THEME.Accent
+    DragHandle.Font = Enum.Font.GothamBold
+    DragHandle.TextSize = 14
+    MakeDraggable(Window, DragHandle)
 
-    -- Topbar & Horizontal Nav
+    ToggleBtn.MouseButton1Click:Connect(function() Window.Visible = not Window.Visible end)
+
+    -- Topbar
     local Topbar = Instance.new("Frame", Window)
     Topbar.Size = UDim2.new(1, 0, 0, 40)
     Topbar.BackgroundColor3 = THEME.Secondary
-    Instance.new("UICorner", Topbar).CornerRadius = THEME.Corner
+    Instance.new("UICorner", Topbar)
+    local Title = Instance.new("TextLabel", Topbar)
+    Title.Text = "  " .. libName; Title.Size = UDim2.new(0, 200, 1, 0); Title.Font = Enum.Font.GothamBold; Title.TextColor3 = THEME.Accent; Title.BackgroundTransparency = 1; Title.TextXAlignment = "Left"
 
-    local LibTitle = Instance.new("TextLabel", Topbar)
-    LibTitle.Text = "  " .. libName; LibTitle.Size = UDim2.new(0, 200, 1, 0); LibTitle.Font = Enum.Font.GothamBold; LibTitle.TextColor3 = THEME.Text; LibTitle.BackgroundTransparency = 1; LibTitle.TextXAlignment = "Left"
-
+    -- Horizontal Nav
     local TabScroll = Instance.new("ScrollingFrame", Window)
     TabScroll.Size = UDim2.new(1, -20, 0, 35)
     TabScroll.Position = UDim2.new(0, 10, 0, 45)
-    TabScroll.BackgroundTransparency = 1
-    TabScroll.ScrollBarThickness = 0
-    local TabList = Instance.new("UIListLayout", TabScroll)
-    TabList.FillDirection = Enum.FillDirection.Horizontal; TabList.Padding = UDim.new(0, 8)
+    TabScroll.BackgroundTransparency = 1; TabScroll.ScrollBarThickness = 0
+    Instance.new("UIListLayout", TabScroll).FillDirection = Enum.FillDirection.Horizontal; TabScroll.UIListLayout.Padding = UDim.new(0, 8)
 
-    -- Search Bar
+    -- Search
     local SearchFrame = Instance.new("Frame", Window)
-    SearchFrame.Size = UDim2.new(1, -20, 0, 32)
-    SearchFrame.Position = UDim2.new(0, 10, 0, 85)
-    SearchFrame.BackgroundColor3 = THEME.Secondary
-    Instance.new("UICorner", SearchFrame).CornerRadius = UDim.new(0, 8)
-
+    SearchFrame.Size = UDim2.new(1, -20, 0, 32); SearchFrame.Position = UDim2.new(0, 10, 0, 85); SearchFrame.BackgroundColor3 = THEME.Secondary; Instance.new("UICorner", SearchFrame)
     local SearchInput = Instance.new("TextBox", SearchFrame)
-    SearchInput.Size = UDim2.new(1, -10, 1, 0); SearchInput.Position = UDim2.new(0, 10, 0, 0); SearchInput.BackgroundTransparency = 1; SearchInput.PlaceholderText = "Search features..."; SearchInput.Text = ""; SearchInput.TextColor3 = THEME.Text; SearchInput.Font = Enum.Font.GothamMedium; SearchInput.TextSize = 13; SearchInput.TextXAlignment = "Left"
+    SearchInput.Size = UDim2.new(1, -10, 1, 0); SearchInput.Position = UDim2.new(0, 10, 0, 0); SearchInput.BackgroundTransparency = 1; SearchInput.PlaceholderText = "Search..."; SearchInput.Text = ""; SearchInput.TextColor3 = THEME.Text; SearchInput.Font = Enum.Font.GothamMedium; SearchInput.TextXAlignment = "Left"
 
     local ContentHolder = Instance.new("Frame", Window)
-    ContentHolder.Size = UDim2.new(1, -20, 1, -145)
-    ContentHolder.Position = UDim2.new(0, 10, 0, 125)
-    ContentHolder.BackgroundTransparency = 1
+    ContentHolder.Size = UDim2.new(1, -20, 1, -155); ContentHolder.Position = UDim2.new(0, 10, 0, 125); ContentHolder.BackgroundTransparency = 1
 
     local WindowObj = {Tabs = {}, CurrentTab = nil}
 
     function WindowObj:CreateTab(name)
         local TabBtn = Instance.new("TextButton", TabScroll)
-        TabBtn.Size = UDim2.new(0, 100, 1, 0); TabBtn.BackgroundColor3 = THEME.Secondary; TabBtn.Text = name; TabBtn.TextColor3 = THEME.TextDark; TabBtn.Font = Enum.Font.GothamMedium; TabBtn.TextSize = 13; Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 8)
+        TabBtn.Size = UDim2.new(0, 100, 1, 0); TabBtn.BackgroundColor3 = THEME.Secondary; TabBtn.Text = name; TabBtn.TextColor3 = THEME.TextDark; TabBtn.Font = Enum.Font.GothamMedium; Instance.new("UICorner", TabBtn)
         
         local TabContent = Instance.new("ScrollingFrame", ContentHolder)
         TabContent.Size = UDim2.new(1, 0, 1, 0); TabContent.BackgroundTransparency = 1; TabContent.Visible = false; TabContent.ScrollBarThickness = 0
-        Instance.new("UIListLayout", TabContent).Padding = UDim.new(0, 6)
+        Instance.new("UIListLayout", TabContent).Padding = UDim.new(0, 8)
 
         TabBtn.MouseButton1Click:Connect(function()
             for _, t in pairs(WindowObj.Tabs) do
@@ -153,96 +132,98 @@ function fyorUI:CreateWindow(libName)
         table.insert(WindowObj.Tabs, TabObj)
         if #WindowObj.Tabs == 1 then TabContent.Visible = true; WindowObj.CurrentTab = TabContent; TabBtn.BackgroundColor3 = THEME.Accent; TabBtn.TextColor3 = THEME.Text end
 
-        function TabObj:CreateButton(text, callback)
-            local b = Instance.new("TextButton", TabContent)
-            b.Size = UDim2.new(1, -5, 0, 35); b.BackgroundColor3 = THEME.Secondary; b.Text = "  " .. text; b.TextColor3 = THEME.Text; b.Font = Enum.Font.GothamMedium; b.TextXAlignment = "Left"; Instance.new("UICorner", b)
-            b.MouseButton1Click:Connect(callback); b:SetAttribute("SearchName", text:lower())
-        end
-
-        function TabObj:CreateToggle(text, default, callback)
-            local state = default
-            local t = Instance.new("TextButton", TabContent)
-            t.Size = UDim2.new(1, -5, 0, 35); t.BackgroundColor3 = THEME.Secondary; t.Text = "  " .. text; t.TextColor3 = THEME.Text; t.Font = Enum.Font.GothamMedium; t.TextXAlignment = "Left"; Instance.new("UICorner", t)
-            
-            local box = Instance.new("Frame", t)
-            box.Size = UDim2.new(0, 20, 0, 20); box.Position = UDim2.new(1, -30, 0.5, -10); box.BackgroundColor3 = state and THEME.Accent or THEME.Black; Instance.new("UICorner", box)
-            
-            t.MouseButton1Click:Connect(function()
-                state = not state
-                TweenService:Create(box, THEME.Tween, {BackgroundColor3 = state and THEME.Accent or THEME.Black}):Play()
-                callback(state)
-            end)
-            t:SetAttribute("SearchName", text:lower())
+        -- [[ COMPONENTS ]]
+        
+        function TabObj:CreateBanner(text)
+            local b = Instance.new("Frame", TabContent)
+            b.Size = UDim2.new(1, -5, 0, 60); b.BackgroundColor3 = Color3.fromRGB(5, 5, 5); Instance.new("UICorner", b); Instance.new("UIStroke", b).Color = THEME.Accent
+            local l = Instance.new("TextLabel", b); l.Size = UDim2.new(1, 0, 1, 0); l.Text = text; l.TextColor3 = THEME.Accent; l.Font = Enum.Font.GothamBold; l.TextSize = 14; l.BackgroundTransparency = 1
         end
 
         function TabObj:CreateSlider(text, min, max, default, callback)
             local s = Instance.new("Frame", TabContent)
-            s.Size = UDim2.new(1, -5, 0, 45); s.BackgroundColor3 = THEME.Secondary; Instance.new("UICorner", s)
+            s.Size = UDim2.new(1, -5, 0, 50); s.BackgroundColor3 = THEME.Secondary; Instance.new("UICorner", s)
             
             local l = Instance.new("TextLabel", s)
-            l.Text = "  " .. text; l.Size = UDim2.new(1, 0, 0, 20); l.BackgroundTransparency = 1; l.TextColor3 = THEME.Text; l.Font = Enum.Font.GothamMedium; l.TextXAlignment = "Left"
+            l.Text = "  " .. text; l.Size = UDim2.new(1, -60, 0, 25); l.TextColor3 = THEME.Text; l.Font = Enum.Font.GothamMedium; l.BackgroundTransparency = 1; l.TextXAlignment = "Left"
             
-            local bar = Instance.new("Frame", s)
-            bar.Size = UDim2.new(1, -40, 0, 6); bar.Position = UDim2.new(0, 20, 0, 30); bar.BackgroundColor3 = THEME.Black; Instance.new("UICorner", bar)
-            
-            local fill = Instance.new("Frame", bar)
-            fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0); fill.BackgroundColor3 = THEME.Accent; Instance.new("UICorner", fill)
+            local valL = Instance.new("TextLabel", s)
+            valL.Text = tostring(default); valL.Size = UDim2.new(0, 50, 0, 25); valL.Position = UDim2.new(1, -55, 0, 0); valL.TextColor3 = THEME.Accent; valL.Font = Enum.Font.GothamBold; valL.BackgroundTransparency = 1; valL.TextXAlignment = "Right"
+
+            local bar = Instance.new("Frame", s); bar.Size = UDim2.new(1, -30, 0, 4); bar.Position = UDim2.new(0, 15, 0, 35); bar.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Instance.new("UICorner", bar)
+            local fill = Instance.new("Frame", bar); fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0); fill.BackgroundColor3 = THEME.Accent; Instance.new("UICorner", fill)
 
             local function update()
                 local move = math.clamp((Mouse.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-                fill.Size = UDim2.new(move, 0, 1, 0)
-                callback(math.floor(min + (max-min)*move))
+                local res = math.floor(min + (max-min)*move)
+                fill.Size = UDim2.new(move, 0, 1, 0); valL.Text = tostring(res); callback(res)
             end
-            bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then update(); local moveCon = Mouse.Move:Connect(update); i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then moveCon:Disconnect() end end) end end)
+            bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then local con; con = Mouse.Move:Connect(update); update() i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then con:Disconnect() end end) end end)
             s:SetAttribute("SearchName", text:lower())
         end
 
         function TabObj:CreateDropdown(text, options, callback)
             local exp = false
             local d = Instance.new("Frame", TabContent)
-            d.Size = UDim2.new(1, -5, 0, 35); d.BackgroundColor3 = THEME.Secondary; d.ClipsDescendants = true; Instance.new("UICorner", d)
+            d.Size = UDim2.new(1, -5, 0, 38); d.BackgroundColor3 = THEME.Secondary; d.ClipsDescendants = true; Instance.new("UICorner", d)
             
-            local b = Instance.new("TextButton", d)
-            b.Size = UDim2.new(1, 0, 0, 35); b.BackgroundTransparency = 1; b.Text = "  " .. text; b.TextColor3 = THEME.Text; b.Font = Enum.Font.GothamMedium; b.TextXAlignment = "Left"
+            local b = Instance.new("TextButton", d); b.Size = UDim2.new(1, 0, 0, 38); b.BackgroundTransparency = 1; b.Text = "  " .. text .. "  ▼"; b.TextColor3 = THEME.Text; b.Font = Enum.Font.GothamMedium; b.TextXAlignment = "Left"
             
-            local container = Instance.new("Frame", d)
-            container.Position = UDim2.new(0, 0, 0, 35); container.Size = UDim2.new(1, 0, 0, #options * 30); container.BackgroundTransparency = 1
-            Instance.new("UIListLayout", container)
+            local container = Instance.new("Frame", d); container.Position = UDim2.new(0, 5, 0, 38); container.Size = UDim2.new(1, -10, 0, #options * 30); container.BackgroundTransparency = 1; Instance.new("UIListLayout", container).Padding = UDim.new(0, 2)
 
             for _, v in pairs(options) do
-                local opt = Instance.new("TextButton", container)
-                opt.Size = UDim2.new(1, 0, 0, 30); opt.BackgroundColor3 = THEME.Background; opt.Text = v; opt.TextColor3 = THEME.TextDark; opt.Font = Enum.Font.GothamMedium; opt.BorderSizePixel = 0
+                local opt = Instance.new("TextButton", container); opt.Size = UDim2.new(1, 0, 0, 28); opt.BackgroundColor3 = THEME.Background; opt.Text = v; opt.TextColor3 = THEME.TextDark; opt.Font = Enum.Font.GothamMedium; Instance.new("UICorner", opt)
                 opt.MouseButton1Click:Connect(function()
-                    b.Text = "  " .. text .. ": " .. v; exp = false
-                    TweenService:Create(d, THEME.Tween, {Size = UDim2.new(1, -5, 0, 35)}):Play()
-                    callback(v)
+                    b.Text = "  " .. text .. ": " .. v .. "  ▼"; exp = false; TweenService:Create(d, THEME.Tween, {Size = UDim2.new(1, -5, 0, 38)}):Play(); callback(v)
                 end)
             end
 
             b.MouseButton1Click:Connect(function()
-                exp = not exp
-                TweenService:Create(d, THEME.Tween, {Size = exp and UDim2.new(1, -5, 0, 35 + (#options * 30)) or UDim2.new(1, -5, 0, 35)}):Play()
+                exp = not exp; TweenService:Create(d, THEME.Tween, {Size = exp and UDim2.new(1, -5, 0, 45 + (#options * 30)) or UDim2.new(1, -5, 0, 38)}):Play()
             end)
             d:SetAttribute("SearchName", text:lower())
+        end
+
+        function TabObj:CreateButton(text, callback)
+            local b = Instance.new("TextButton", TabContent)
+            b.Size = UDim2.new(1, -5, 0, 38); b.BackgroundColor3 = THEME.Secondary; b.Text = "  " .. text; b.TextColor3 = THEME.Text; b.Font = Enum.Font.GothamMedium; b.TextXAlignment = "Left"; Instance.new("UICorner", b)
+            b.MouseButton1Click:Connect(callback); b:SetAttribute("SearchName", text:lower())
+        end
+
+        function TabObj:CreateToggle(text, default, callback)
+            local state = default
+            local t = Instance.new("TextButton", TabContent)
+            t.Size = UDim2.new(1, -5, 0, 38); t.BackgroundColor3 = THEME.Secondary; t.Text = "  " .. text; t.TextColor3 = THEME.Text; t.Font = Enum.Font.GothamMedium; t.TextXAlignment = "Left"; Instance.new("UICorner", t)
+            local box = Instance.new("Frame", t); box.Size = UDim2.new(0, 34, 0, 18); box.Position = UDim2.new(1, -45, 0.5, -9); box.BackgroundColor3 = state and THEME.Accent or THEME.Background; Instance.new("UICorner", box).CornerRadius = UDim.new(1, 0)
+            local k = Instance.new("Frame", box); k.Size = UDim2.new(0, 14, 0, 14); k.Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7); k.BackgroundColor3 = THEME.Text; Instance.new("UICorner", k).CornerRadius = UDim.new(1, 0)
+            t.MouseButton1Click:Connect(function()
+                state = not state
+                TweenService:Create(box, THEME.Tween, {BackgroundColor3 = state and THEME.Accent or THEME.Background}):Play()
+                TweenService:Create(k, THEME.Tween, {Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}):Play()
+                callback(state)
+            end)
+            t:SetAttribute("SearchName", text:lower())
         end
 
         return TabObj
     end
 
     SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
-        local query = SearchInput.Text:lower()
+        local q = SearchInput.Text:lower()
         if WindowObj.CurrentTab then
-            for _, child in pairs(WindowObj.CurrentTab:GetChildren()) do
-                if child:IsA("GuiObject") then
-                    local sName = child:GetAttribute("SearchName")
-                    child.Visible = not sName or sName:find(query) ~= nil
-                end
+            for _, c in pairs(WindowObj.CurrentTab:GetChildren()) do
+                if c:IsA("GuiObject") then local sn = c:GetAttribute("SearchName") c.Visible = not sn or sn:find(q) ~= nil end
             end
         end
     end)
 
-    function WindowObj:Unload() MainGui:Destroy(); NotifGui:Destroy() end
+    function WindowObj:Unload() MainGui:Destroy() end
     return WindowObj
+end
+
+function fyorUI:Notify(title, desc, duration)
+    -- Sistem notifikasi sederhana (opsional, bisa gunakan versi sebelumnya)
+    print("Notification: " .. title .. " - " .. desc)
 end
 
 return fyorUI
